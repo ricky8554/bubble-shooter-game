@@ -101,19 +101,47 @@ randGenBalls r c =
 genRandBall :: Int -> Ball
 genRandBall n = Ball (colors !! (randList !! (bheight*bwidth + n) `mod` colorNum ) )
 
-
 neighborExist :: Pos -> Board -> Bool
-neighborExist (Pos r c) board = or [isJust (board ! pos) | pos <- posList]
+neighborExist pos board = or [Data.Maybe.isJust (board ! p) | p <- findNeighbor pos]
+
+findNeighbor :: Pos -> [Pos]
+findNeighbor (Pos r c) = map checkBoundry p
   where
-    posList = [Pos (r+1) c, Pos (r-1) c, Pos r (c+1), Pos r (c-1)]
+    pEven = [Pos (r-1) c, Pos (r-1) (c-1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c-1)]
+    pOdd = [Pos (r-1) c, Pos (r-1) (c+1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c+1)]
+    p = if even r then pEven else pOdd
+    checkBoundry :: Pos -> Pos
+    checkBoundry (Pos r c) = let rt
+                                   | r < 1 = 1
+                                   | r > bheight = bheight
+                                   | otherwise = r
+                                 ct
+                                   | c < 1 = 1
+                                   | c > bwidth = bwidth
+                                   | otherwise = c
+                                 in Pos rt ct
 
 insertBoard :: Pos -> Ball -> Board -> Board
-insertBoard (Pos r c) ball board = case MX.safeSet ball (r, c) board of
+insertBoard (Pos r c) ball board = case safeSet ball (r, c) board of
                                       Just b -> b
-                                      _ -> board
+                                      otherwise -> board
 
+setBoard :: Pos -> Ball -> Board -> Board
+setBoard (Pos r c) ball = safeset ball (r, c)
 
-
+removeFromBoard :: Pos -> Board -> Board
+removeFromBoard pos board = if findNumSameNeighbor pos (board ! pos) board 0 >= 3
+                              then remove pos (board ! pos) board
+                              else board
+  where
+    remove pos1(Pos r c) ball board1 = foldl (\b p -> remove p ball b) newBoard sameNeighbors
+      where
+        sameNeighbors = foldl (\b p -> if board1 ! p == ball then p:b else b) [] (findNeighbor pos1)
+        newBoard = foldl (\b p -> if b ! p == ball then setBoard p (Ball EMPTY) b else b) board1 sameNeighbors
+    findNumSameNeighbor pos2(Pos r c) ball board2 num = foldl (\b p -> findSameNeighbor p ball board2 b) newNum sameNeighbors
+      where
+        sameNeighbors = foldl (\b p -> if board2 ! p == ball then p:b else b) [] (findNeighbor pos2)
+        newNum = foldl (\b p -> if member p result then b else insert p b) num sameNeighbors
 
 -------------------------------------------------------------------------------
 -- | Playing a Move
