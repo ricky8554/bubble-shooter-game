@@ -32,6 +32,7 @@ module Model.Board
 
 import Prelude hiding (init)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import qualified Data.Matrix as MX
 import Data.Maybe (isJust)
 import System.Random
@@ -40,15 +41,16 @@ import System.Random
 -- | Board --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY deriving (Eq, Ord, Show)
-data Ball = Ball Color deriving (Show)
+data Ball = Ball Color deriving (Eq,Show)
 
 data Pos = Pos
   { pRow :: Int  -- 1 <= pRow <= dim 
   , pCol :: Int  -- 1 <= pCol <= dim
   }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord,Show)
 
 type Board = MX.Matrix Ball
+type PosSet = S.Set Pos
 
 
 
@@ -73,7 +75,8 @@ colorNum = 5
 colors :: [Color]
 colors = [ RED, BLUE,  BLACK, YELLOW,GREEN]
 
-
+allPos :: [Pos]
+allPos = [ Pos i j | i <- [1..theight], j <- [1..bwidth] ]
 
 -- emptyPositions :: Board -> [Pos]
 -- emptyPositions board  = [ p | p <- positions, M.notMember p board]
@@ -83,6 +86,11 @@ colors = [ RED, BLUE,  BLACK, YELLOW,GREEN]
 init :: Board
 init = MX.matrix theight bwidth $ uncurry randGenBalls
 
+init1 :: Board
+init1 = MX.matrix theight bwidth $ (\ (r, _y) -> Ball (colors !! (r `mod` colorNum)))
+
+init2 :: Board
+init2 = MX.matrix theight bwidth $ (\ (_x, c) -> Ball (colors !! (c `mod` colorNum)))
 
 rvalues :: [Int]
 rvalues = map fst $ scanl (\(_, gen) _ -> random gen) (random (mkStdGen 1)) $ repeat ()
@@ -101,47 +109,89 @@ randGenBalls r c =
 genRandBall :: Int -> Ball
 genRandBall n = Ball (colors !! (randList !! (bheight*bwidth + n) `mod` colorNum ) )
 
-neighborExist :: Pos -> Board -> Bool
-neighborExist pos board = or [Data.Maybe.isJust (board ! p) | p <- findNeighbor pos]
+-- neighborExist :: Pos -> Board -> Bool
+-- neighborExist pos board = or [Data.Maybe.isJust (board ! p) | p <- findNeighbor pos]
 
 findNeighbor :: Pos -> [Pos]
-findNeighbor (Pos r c) = map checkBoundry p
+findNeighbor (Pos r c) = if even r then pEven else pOdd
   where
-    pEven = [Pos (r-1) c, Pos (r-1) (c-1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c-1)]
-    pOdd = [Pos (r-1) c, Pos (r-1) (c+1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c+1)]
-    p = if even r then pEven else pOdd
-    checkBoundry :: Pos -> Pos
-    checkBoundry (Pos r c) = let rt
-                                   | r < 1 = 1
-                                   | r > bheight = bheight
-                                   | otherwise = r
-                                 ct
-                                   | c < 1 = 1
-                                   | c > bwidth = bwidth
-                                   | otherwise = c
-                                 in Pos rt ct
+    pOdd  = [Pos (r-1) c, Pos (r-1) (c-1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c-1)]
+    pEven = [Pos (r-1) c, Pos (r-1) (c+1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c+1)]
 
 insertBoard :: Pos -> Ball -> Board -> Board
-insertBoard (Pos r c) ball board = case safeSet ball (r, c) board of
-                                      Just b -> b
-                                      otherwise -> board
+insertBoard (Pos r c) ball board = case MX.safeSet ball (r, c) board of
+                                      Just b  -> b
+                                      _       -> board
 
 setBoard :: Pos -> Ball -> Board -> Board
-setBoard (Pos r c) ball = safeset ball (r, c)
+setBoard = insertBoard
+
+setBoardEmpty :: Pos -> Board -> Board
+setBoardEmpty pos board = setBoard pos (Ball EMPTY) board
+
+dfsColor' :: Board -> Ball -> Pos -> PosSet -> PosSet
+dfsColor' board ball pos set = if S.member pos set then set else newset
+  where
+    neighbor = filter (\p -> (board ! p) == Just ball ) (findNeighbor pos)
+    newset = foldr next (S.insert pos set) neighbor
+    next pos' set' = dfsColor' board ball pos' set'
+
+dfsColor :: Board -> Maybe Ball -> Pos -> PosSet
+dfsColor board (Just ball) pos = dfsColor' board ball pos S.empty 
+dfsColor _ Nothing _ = S.empty
+
+dfs' :: Board -> Pos -> PosSet -> PosSet
+dfs' board pos set = if S.member pos set then set else newset
+  where
+    neighbor = filter (\p -> isJust (board ! p) ) (findNeighbor pos)
+    newset = foldr next (S.insert pos set) neighbor
+    next pos' set' = dfs' board pos' set'
+
+dfs :: Board -> Pos -> PosSet -> (PosSet, [Pos])
+dfs board pos set = if S.member pos set then (S.empty, []) else (s, l)
+  where  
+    s = dfs' board pos S.empty 
+    l' = S.toList s
+    l = if any attachWall l' then [] else l'
+
+attachWall :: Pos -> Bool 
+attachWall (Pos 1 _) = True 
+attachWall (Pos x 1) = odd x
+attachWall (Pos _ y) = y == bwidth 
+
 
 removeFromBoard :: Pos -> Board -> Board
-removeFromBoard pos board = if findNumSameNeighbor pos (board ! pos) board 0 >= 3
-                              then remove pos (board ! pos) board
-                              else board
+removeFromBoard pos board = if size > 2 then newBoard else board
   where
-    remove pos1(Pos r c) ball board1 = foldl (\b p -> remove p ball b) newBoard sameNeighbors
-      where
-        sameNeighbors = foldl (\b p -> if board1 ! p == ball then p:b else b) [] (findNeighbor pos1)
-        newBoard = foldl (\b p -> if b ! p == ball then setBoard p (Ball EMPTY) b else b) board1 sameNeighbors
-    findNumSameNeighbor pos2(Pos r c) ball board2 num = foldl (\b p -> findSameNeighbor p ball board2 b) newNum sameNeighbors
-      where
-        sameNeighbors = foldl (\b p -> if board2 ! p == ball then p:b else b) [] (findNeighbor pos2)
-        newNum = foldl (\b p -> if member p result then b else insert p b) num sameNeighbors
+    dfsSet = dfsColor board (board ! pos) pos
+    size = S.size dfsSet
+    dfsList = S.toList dfsSet
+    newBoard = foldr setBoardEmpty board dfsList
+
+removeDetachBoard :: Board -> Board
+removeDetachBoard board = newBoard
+  where
+    l = filter (\p -> isJust (board ! p)) allPos
+    (_, rl) = foldr dfsD (S.empty,[]) l
+    dfsD pos (s,l) = slu (dfs board pos s) (s,l)
+    slu (s1,l1) (s2,l2) = (S.union s1 s2, l1 ++ l2)
+    newBoard = foldr setBoardEmpty board rl
+
+
+
+-- >>> init1
+
+-- >>> removeFromBoard (Pos 1 1) init1
+
+-- >>> removeFromBoard (Pos 2 1) init1
+
+
+-- >>> a = (setBoardEmpty (Pos 1 3) (setBoardEmpty (Pos 3 3) (setBoardEmpty (Pos 3 2) (setBoardEmpty (Pos 1 2) (removeDetachBoard (removeFromBoard (Pos 2 1) (setBoard (Pos 2 2) (Ball RED) (removeFromBoard (Pos 2 1) init1))))))))  
+-- >>> removeDetachBoard a
+
+
+
+-- >>> removeFromBoard (Pos 2 1) init2
 
 -------------------------------------------------------------------------------
 -- | Playing a Move

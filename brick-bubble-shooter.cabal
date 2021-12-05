@@ -18,7 +18,9 @@ executable brick-tac-toe
                        brick,
                        vector,
                        linear,
-                       matrix
+                       matrix,
+                       unordered-containers
+                       
   hs-source-dirs:      src
   other-modules:       View, 
                        Control,
