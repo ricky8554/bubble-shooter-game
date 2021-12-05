@@ -16,6 +16,7 @@ module Model.Board
   , (!)
   , init
   , genRandBall
+  ,nextBoard
   -- , put
   -- , positions
   -- , emptyPositions
@@ -177,7 +178,9 @@ removeDetachBoard board = newBoard
     slu (s1,l1) (s2,l2) = (S.union s1 s2, l1 ++ l2)
     newBoard = foldr setBoardEmpty board rl
 
-
+-- TODO:
+nextBoard:: (Int,Ball) -> Board -> Board
+nextBoard (angle, ball) board = board
 
 -- >>> init1
 

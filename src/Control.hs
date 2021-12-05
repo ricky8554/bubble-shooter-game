@@ -15,18 +15,18 @@ import Model.Player
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   -- AppEvent Tick                   -> nextS s =<< liftIO (play O s)
-  -- T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (play X s)
+  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s 
   -- T.VtyEvent (V.EvKey V.KUp   _)  -> Brick.continue (move up    s)
   -- T.VtyEvent (V.EvKey V.KDown _)  -> Brick.continue (move down  s)
-  -- T.VtyEvent (V.EvKey V.KLeft _)  -> Brick.continue (move left  s)
-  -- T.VtyEvent (V.EvKey V.KRight _) -> Brick.continue (move right s)
+  T.VtyEvent (V.EvKey V.KLeft _)  -> Brick.continue (move left  s)
+  T.VtyEvent (V.EvKey V.KRight _) -> Brick.continue (move right s)
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   _                               -> Brick.continue s -- Brick.halt s
 
--- -------------------------------------------------------------------------------
--- move :: (Pos -> Pos) -> PlayState -> PlayState
--- -------------------------------------------------------------------------------
--- move f s = s { psPos = f (psPos s) }
+-------------------------------------------------------------------------------
+move :: (Player  -> Player) -> PlayState -> PlayState
+-------------------------------------------------------------------------------
+move f s = s { ps = f (ps s) }
 
 -------------------------------------------------------------------------------
 -- play :: XO -> PlayState -> IO (Result Board)
@@ -42,8 +42,17 @@ control s ev = case ev of
 -- -------------------------------------------------------------------------------
 -- nextS :: PlayState -> Result Board -> EventM n (Next PlayState)
 -- -------------------------------------------------------------------------------
--- nextS s b = case next s b of
---   Right s' -> continue s'
---   Left res -> halt (s) 
+
+play s = s {ps = p, psBoard = b} 
+  where
+    b = nextBoard (getPlayer (ps s)) (psBoard s)
+    p = nextPlayer (ps s)
+
+
+nextS s = case ballNum (ps s) of
+  0 -> halt s
+  _ -> continue s' 
+  where s' = play s
+
 
 
