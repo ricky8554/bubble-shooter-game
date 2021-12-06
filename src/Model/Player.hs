@@ -25,6 +25,9 @@ right p = p { angle = max (angle p - 1) 10}
 getPlayer :: Player -> (Int, Ball)
 getPlayer p = (angle p, ball p)
 
+isPlayerFinished :: Player -> Bool 
+isPlayerFinished p = ball p == Ball EMPTY 
+
 nextPlayer :: Player -> Player
 nextPlayer p = case ballNum p of
                 0 -> p

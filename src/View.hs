@@ -29,7 +29,6 @@ view s = [view' s]
 
 view' :: PlayState -> Widget String
 view' s = 
-  vLimit 40 $
     withBorderStyle unicode $
       -- borderWithLabel (str (header s)) $
         vTile [ mkRow s row | row <- [1..theight] ]

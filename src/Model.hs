@@ -5,6 +5,7 @@ import Prelude hiding ((!!))
 import qualified Model.Board  as Board
 -- import qualified Model.Score  as Score
 import qualified Model.Player as Player
+import qualified Model.FlyingBall as FlyingBall
 
 -------------------------------------------------------------------------------
 -- | Ticks mark passing of time: a custom event that we constantly stream
@@ -23,12 +24,14 @@ data State
 data PlayState = PS
   { ps       :: Player.Player   -- ^ player X info
   , psBoard  :: Board.Board     -- ^ current board
+  , psFlying :: FlyingBall.FlyingBall 
   } 
 
 init :: Int -> PlayState
 init n = PS 
   { ps       = Player.init 
   , psBoard  = Board.init
+  , psFlying = FlyingBall.init 
   }
 
 

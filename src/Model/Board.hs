@@ -16,7 +16,8 @@ module Model.Board
   , (!)
   , init
   , genRandBall
-  ,nextBoard
+  , updateBoard
+  ,isBoardFinished
   -- , put
   -- , positions
   -- , emptyPositions
@@ -35,8 +36,9 @@ import Prelude hiding (init)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Matrix as MX
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, isNothing)
 import System.Random
+import GHC.Float (int2Float)
 
 -------------------------------------------------------------------------------
 -- | Board --------------------------------------------------------------------
@@ -60,12 +62,14 @@ type PosSet = S.Set Pos
 board ! (Pos r c) = case MX.safeGet r c board of
                       Just (Ball EMPTY) -> Nothing
                       x -> x
+validPos :: Pos -> Bool
+validPos (Pos r c) = r > 0 && c > 0 && c < bwidth && r < theight
 
 bheight :: Int
 bheight = 5
 
 theight :: Int
-theight = bheight * 1
+theight = bheight + 5
 
 bwidth :: Int
 bwidth = 10
@@ -128,7 +132,7 @@ setBoard :: Pos -> Ball -> Board -> Board
 setBoard = insertBoard
 
 setBoardEmpty :: Pos -> Board -> Board
-setBoardEmpty pos board = setBoard pos (Ball EMPTY) board
+setBoardEmpty pos = setBoard pos (Ball EMPTY)
 
 dfsColor' :: Board -> Ball -> Pos -> PosSet -> PosSet
 dfsColor' board ball pos set = if S.member pos set then set else newset
@@ -138,7 +142,7 @@ dfsColor' board ball pos set = if S.member pos set then set else newset
     next pos' set' = dfsColor' board ball pos' set'
 
 dfsColor :: Board -> Maybe Ball -> Pos -> PosSet
-dfsColor board (Just ball) pos = dfsColor' board ball pos S.empty 
+dfsColor board (Just ball) pos = dfsColor' board ball pos S.empty
 dfsColor _ Nothing _ = S.empty
 
 dfs' :: Board -> Pos -> PosSet -> PosSet
@@ -150,15 +154,15 @@ dfs' board pos set = if S.member pos set then set else newset
 
 dfs :: Board -> Pos -> PosSet -> (PosSet, [Pos])
 dfs board pos set = if S.member pos set then (S.empty, []) else (s, l)
-  where  
-    s = dfs' board pos S.empty 
+  where
+    s = dfs' board pos S.empty
     l' = S.toList s
     l = if any attachWall l' then [] else l'
 
-attachWall :: Pos -> Bool 
-attachWall (Pos 1 _) = True 
-attachWall (Pos x 1) = odd x
-attachWall (Pos _ y) = y == bwidth 
+attachWall :: Pos -> Bool
+attachWall (Pos 1 _) = True
+attachWall (Pos r 1) = odd r
+attachWall (Pos _ c) = c == bwidth
 
 
 removeFromBoard :: Pos -> Board -> Board
@@ -178,9 +182,63 @@ removeDetachBoard board = newBoard
     slu (s1,l1) (s2,l2) = (S.union s1 s2, l1 ++ l2)
     newBoard = foldr setBoardEmpty board rl
 
--- TODO:
-nextBoard:: (Int,Ball) -> Board -> Board
-nextBoard (angle, ball) board = board
+closeTo :: Float -> Int -> Bool
+closeTo f i = abs (f - int2Float i) < 0.0001
+
+
+isCellEmpty :: Float -> Float -> Board -> Bool
+isCellEmpty r c board = c1 && c2
+  where
+    r' = floor r
+    c' = if even r' then c - 0.5 else c
+    c1 = isNothing (board ! Pos r' (floor c'))
+    c2 = isNothing (board ! Pos r' (ceiling c'))
+
+updateBoard'' :: Pos -> Ball -> Board -> (Bool,Board)
+updateBoard'' pos ball board  = if validPos pos && isNothing (board ! pos) 
+                                then (True, removeDetachBoard (removeFromBoard pos (setBoard pos ball board) )) 
+                                else (False, board)
+
+updateBoardc' :: Int -> Float -> Ball -> Board -> Board
+updateBoardc' r c ball board
+  | ron == flr = if b1 then up1 else up2
+  | b2 = up2
+  | otherwise = up1
+  where
+      cel = ceiling c
+      flr = floor c
+      ron = round c
+      (b1, up1) = updateBoard'' (Pos r flr) ball board
+      (b2, up2) = updateBoard'' (Pos r cel) ball board
+
+
+updateBoard :: (Float, Float, Ball) -> Board -> (Bool,Board)
+updateBoard (c, r, ball) board
+  | closeTo r 1 = (True,updateBoardc' 1 c ball board)
+  | isCellEmpty r c board = (False,board)
+  | int2Float (ceiling r) - r < 0.15 = (True,updateBoardc' (ceiling r) c ball board)
+  | otherwise = (True,updateBoardc' (floor r) c ball board)
+
+
+
+
+
+  -- case
+
+
+isBoardFinished :: Board -> Bool
+isBoardFinished board = null l || any touchBoardBottom l
+  where
+    l = filter (\p -> isJust (board ! p)) allPos
+
+touchBoardBottom :: Pos -> Bool
+touchBoardBottom (Pos r _) = r == theight
+
+
+
+
+
+
 
 -- >>> init1
 
