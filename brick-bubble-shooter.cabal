@@ -9,7 +9,7 @@ build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
-executable brick-bubble-shooter
+executable brick-tac-toe
   main-is:             Main.hs
   build-depends:       base >=4.9, 
                        random >=1.1 && <1.2,
@@ -18,9 +18,7 @@ executable brick-bubble-shooter
                        brick,
                        vector,
                        linear,
-                       matrix,
-                       unordered-containers
-                       
+                       matrix
   hs-source-dirs:      src
   other-modules:       View, 
                        Control,
