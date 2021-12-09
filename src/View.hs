@@ -110,7 +110,7 @@ mkCenterBall s = mkfb' mkfb
   where 
     ((dx,dy),ball) = getPlayer (ps s)
     mkfb' f =  center (vBox [ f y  | y <- [1..bs]])
-    mkfb y = center (hBox [ mkBlock' (if valid x (bs-y+1-bsh) then b2 else b1) | x <- [-24..bsh]])
+    mkfb y = center (hBox [ mkBlock' (if valid x (bs-y+1-bsh) then b2 else b1) | x <- [-bsh+1..bsh]])
     valid x y = if dx == 0 
                 then x == 0
                 else x `mod` dx == 0 && y `mod` dy == 0 && x `div` dx == y `div` dy
@@ -155,13 +155,14 @@ mkBlock' (Just (Ball SPECIAL)) =  (withAttr test1Atr blockC)
 mkBlock'  _  =  blockC
 
 
-bsf :: Float
-bsf = 50
+
 
 bs :: Int
-bs = 50
+bs = 24
 bsh :: Int
-bsh = 25
+bsh = bs `div` 2
+bsf :: Float
+bsf = int2Float bs
 
 blockB :: Widget n
 blockB = block bs bs
