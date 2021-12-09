@@ -65,7 +65,7 @@ nextS s = case (isBoardFinished b, isPlayerFinished pl, hasFlyingBall fb) of
     b = psBoard s
     fb' = nextFlyingBall fb
     (b1,b') = updateBoard (getFlyingBall fb') b
-    s' = s {psFlying = if b1 then setFlyingBall (0,Ball EMPTY) else fb', psBoard = b'}    
+    s' = s {psFlying = if b1 then setFlyingBall ((0,0),Ball EMPTY) else fb', psBoard = b'}    
 
 
 

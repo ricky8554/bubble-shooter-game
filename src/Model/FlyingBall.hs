@@ -23,25 +23,28 @@ ftheight = int2Float theight
 init :: FlyingBall
 init  = FlyingBall 0 0 0 0 (Ball EMPTY)
 
-setFlyingBall :: (Int,Ball) -> FlyingBall
+setFlyingBall :: ((Int,Int),Ball) -> FlyingBall
 setFlyingBall (angle,ball) = FlyingBall ( (fbwidth + 1)  / 2)  ftheight (angle2dx angle) (angle2dy angle) ball
 
-hasFlyingBall :: FlyingBall -> Bool 
-hasFlyingBall fb = ball fb /= Ball EMPTY 
+hasFlyingBall :: FlyingBall -> Bool
+hasFlyingBall fb = ball fb /= Ball EMPTY
 
 -- >>> - (sin (int2Float 90 * (pi/180)))
 -- -1.0
 
 -- Only Move for 0.1
-angle2dy :: Int -> Float
-angle2dy angle =  - (sin (int2Float angle * (pi/180)) / 10)
+dis ::  Int -> Int -> Float
+dis x y = sqrt ( int2Float (x*x) + int2Float (y*y))
+
+angle2dy :: (Int, Int) -> Float
+angle2dy (dx,dy) = - (int2Float dy / (dis dx dy / 0.1))
 
 -- Only Move for 0.1
-angle2dx :: Int -> Float
-angle2dx angle = cos (int2Float angle * (pi/180)) / 10
+angle2dx :: (Int, Int) -> Float
+angle2dx (dx,dy) =  int2Float dx / (dis dx dy / 0.1)
 
 nextFlyingBall :: FlyingBall -> FlyingBall
-nextFlyingBall fb = 
+nextFlyingBall fb =
     case (fball == Ball EMPTY, x' + dx' < 1, x' + dx' > fbwidth , y' + dy' < 1) of
         (True, _, _, _) -> fb
         (_, True, _, True) -> fb {x = 1, dx = -dx', y = 1, dy = -dy'}
@@ -50,7 +53,7 @@ nextFlyingBall fb =
         (_, _, True, _) -> fb {x = 10, dx = -dx', y = y' + dy'}
         (_, _, _, True) -> fb {x = x' + dx', y = 1, dy = -dy'}
         (_, _, _, _) -> fb {x = x' + dx', y = y' + dy'}
-    where 
+    where
         fball = ball fb
         dx' = dx fb
         dy' = dy fb

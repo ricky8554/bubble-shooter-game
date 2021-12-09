@@ -68,9 +68,9 @@ posFB :: PlayState -> Int -> Int -> (Int, Int, Int)
 posFB s r c =
   case (flfb == Ball EMPTY,
         inRange x y,
-        inRange (x + 1) y,
+        inRange (x + 0.95) y,
         inRange x  (y + 1),
-        inRange (x + 1) (y + 1)) of
+        inRange (x + 0.95) (y + 1)) of
     (True, _, _, _, _) -> (0,0,0)
     (_, True, _, _, _) -> (1,wrap (x - mc), wrap y)
     (_, _, True, _, _) -> (2,wrap (x + 1 - mc), wrap y)
@@ -93,20 +93,29 @@ posFB s r c =
 mkCell' :: PlayState -> Int -> Int -> Widget n
 -- mkCell' _ r c = center (str (printf "(%d, %d)" r c))
 mkCell' s r c
-  -- | r == 5 && c == 5 = center (mkFBCell 1 1 1 40 60 (Just (Ball RED)))
   | hasFB > 0 = center (mkFBCell hasFB r c y' x' bmb''')
-  | r == theight && c == (bwidth `div` 2 + 1) =  center (mkBlock bmb'')
+  | r == theight && c == (bwidth `div` 2 + 1) =  center (mkCenterBall s)
   | odd r = center (mkBlock bmb)
   | c == 1 || c == (bwidth + 1) =  mkBlock (Just (Ball HALF))
   | otherwise =  center (mkBlock bmb')
   where
     bmb      = psBoard s ! Pos r c
     bmb'     = psBoard s ! Pos r (c-1)
-    bmb''    = Just psfb
     bmb'''   = Just flfb
     (hasFB, x', y')   = posFB s r c
-    (Player _ _ psfb) = ps s
     (FlyingBall _ _ _ _ flfb) = psFlying s
+
+mkCenterBall :: PlayState -> Widget n
+mkCenterBall s = mkfb' mkfb
+  where 
+    ((dx,dy),ball) = getPlayer (ps s)
+    mkfb' f =  center (vBox [ f y  | y <- [1..bs]])
+    mkfb y = center (hBox [ mkBlock' (if valid x (bs-y+1-bsh) then b2 else b1) | x <- [-24..bsh]])
+    valid x y = if dx == 0 
+                then x == 0
+                else x `mod` dx == 0 && y `mod` dy == 0 && x `div` dx == y `div` dy
+    b1 = Just ball
+    b2 = Just (Ball SPECIAL)
     
 
 mkFBCell :: Int -> Int -> Int -> Int -> Int -> Maybe Ball -> Widget n
@@ -142,16 +151,17 @@ mkBlock'  (Just (Ball BLUE)) =  (withAttr blueAtr blockC)
 mkBlock' (Just (Ball YELLOW)) =  (withAttr yellowAtr blockC)
 mkBlock'  (Just (Ball BLACK)) =  (withAttr blackAtr blockC)
 mkBlock' (Just (Ball GREEN)) =  (withAttr greenAtr blockC)
-mkBlock'  _  =   blockC
+mkBlock' (Just (Ball SPECIAL)) =  (withAttr test1Atr blockC)
+mkBlock'  _  =  blockC
 
 
 bsf :: Float
-bsf = 100
+bsf = 50
 
 bs :: Int
-bs = 100
+bs = 50
 bsh :: Int
-bsh = 50
+bsh = 25
 
 blockB :: Widget n
 blockB = block bs bs

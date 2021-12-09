@@ -42,7 +42,7 @@ import GHC.Float (int2Float)
 -------------------------------------------------------------------------------
 -- | Board --------------------------------------------------------------------
 -------------------------------------------------------------------------------
-data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY | HALF deriving (Eq, Ord, Show)
+data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY | HALF | SPECIAL deriving (Eq, Ord, Show)
 data Ball = Ball Color deriving (Eq,Show)
 
 data Pos = Pos
