@@ -14,7 +14,8 @@ data Player = Player
   }
 
 init :: Player
-init = Player 90 1000 (genRandBall 1001)
+init = Player 90 10 (genRandBall 1001)
+
 
 left :: Player -> Player
 left p = p { angle = min (angle p + 1) 170}

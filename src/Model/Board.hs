@@ -33,7 +33,6 @@ module Model.Board
   where
 
 import Prelude hiding (init)
-import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Matrix as MX
 import Data.Maybe (isJust, isNothing)
@@ -43,7 +42,7 @@ import GHC.Float (int2Float)
 -------------------------------------------------------------------------------
 -- | Board --------------------------------------------------------------------
 -------------------------------------------------------------------------------
-data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY deriving (Eq, Ord, Show)
+data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY | HALF deriving (Eq, Ord, Show)
 data Ball = Ball Color deriving (Eq,Show)
 
 data Pos = Pos
@@ -62,6 +61,7 @@ type PosSet = S.Set Pos
 board ! (Pos r c) = case MX.safeGet r c board of
                       Just (Ball EMPTY) -> Nothing
                       x -> x
+
 validPos :: Pos -> Bool
 validPos (Pos r c) = r > 0 && c > 0 && c < bwidth && r < theight
 
@@ -232,7 +232,7 @@ isBoardFinished board = null l || any touchBoardBottom l
     l = filter (\p -> isJust (board ! p)) allPos
 
 touchBoardBottom :: Pos -> Bool
-touchBoardBottom (Pos r _) = r == theight
+touchBoardBottom (Pos r _) = r == theight - 1
 
 
 

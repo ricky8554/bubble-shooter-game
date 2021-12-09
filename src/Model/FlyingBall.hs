@@ -24,18 +24,21 @@ init :: FlyingBall
 init  = FlyingBall 0 0 0 0 (Ball EMPTY)
 
 setFlyingBall :: (Int,Ball) -> FlyingBall
-setFlyingBall (angle,ball) = FlyingBall ( fbwidth  / 2)  ftheight (angle2dx angle) (angle2dy angle) ball
+setFlyingBall (angle,ball) = FlyingBall ( (fbwidth + 1)  / 2)  ftheight (angle2dx angle) (angle2dy angle) ball
 
 hasFlyingBall :: FlyingBall -> Bool 
 hasFlyingBall fb = ball fb /= Ball EMPTY 
 
+-- >>> - (sin (int2Float 90 * (pi/180)))
+-- -1.0
+
 -- Only Move for 0.1
 angle2dy :: Int -> Float
-angle2dy angle =  - (cos (int2Float angle * (pi/180)) / 10)
+angle2dy angle =  - (sin (int2Float angle * (pi/180)) / 10)
 
 -- Only Move for 0.1
 angle2dx :: Int -> Float
-angle2dx angle = sin (int2Float angle * (pi/180)) / 10
+angle2dx angle = cos (int2Float angle * (pi/180)) / 10
 
 nextFlyingBall :: FlyingBall -> FlyingBall
 nextFlyingBall fb = 
