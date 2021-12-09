@@ -29,7 +29,7 @@ data PlayState = PS
 
 init :: Int -> PlayState
 init n = PS 
-  { ps       = Player.init 
+  { ps       = Player.init Board.init
   , psBoard  = Board.init
   , psFlying = FlyingBall.init 
   }

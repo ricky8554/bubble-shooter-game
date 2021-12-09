@@ -17,7 +17,8 @@ module Model.Board
   , init
   , genRandBall
   , updateBoard
-  ,isBoardFinished
+  , isBoardFinished
+  , getExistBalls
   -- , put
   -- , positions
   -- , emptyPositions
@@ -33,23 +34,25 @@ module Model.Board
   where
 
 import Prelude hiding (init)
+import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Matrix as MX
 import Data.Maybe (isJust, isNothing)
 import System.Random
 import GHC.Float (int2Float)
+import Data.Bool (Bool)
 
 -------------------------------------------------------------------------------
 -- | Board --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY | HALF | SPECIAL deriving (Eq, Ord, Show)
-data Ball = Ball Color deriving (Eq,Show)
+data Ball = Ball Color deriving (Eq, Ord, Show)
 
 data Pos = Pos
   { pRow :: Int  -- 1 <= pRow <= dim 
   , pCol :: Int  -- 1 <= pCol <= dim
   }
-  deriving (Eq, Ord,Show)
+  deriving (Eq, Ord, Show)
 
 type Board = MX.Matrix Ball
 type PosSet = S.Set Pos
@@ -61,24 +64,24 @@ type PosSet = S.Set Pos
 board ! (Pos r c) = case MX.safeGet r c board of
                       Just (Ball EMPTY) -> Nothing
                       x -> x
-
 validPos :: Pos -> Bool
-validPos (Pos r c) = r > 0 && c > 0 && c < bwidth && r < theight
+validPos (Pos r c) = r > 0 && c > 0 && r <= theight && ((odd r && c <= bwidth) || (even r && c < bwidth))
+
 
 bheight :: Int
-bheight = 5
+bheight = 2
 
 theight :: Int
-theight = bheight + 5
+theight = bheight + 2
 
 bwidth :: Int
-bwidth = 10
+bwidth = 5
 
 colorNum:: Int
 colorNum = 5
 
 colors :: [Color]
-colors = [ RED, BLUE,  BLACK, YELLOW,GREEN]
+colors = [RED, BLUE,  BLACK, YELLOW, GREEN]
 
 allPos :: [Pos]
 allPos = [ Pos i j | i <- [1..theight], j <- [1..bwidth] ]
@@ -89,7 +92,16 @@ allPos = [ Pos i j | i <- [1..theight], j <- [1..bwidth] ]
 
 
 init :: Board
-init = MX.matrix theight bwidth $ uncurry randGenBalls
+-- init = MX.matrix theight bwidth $ uncurry randGenBalls
+init = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
+                                    Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+
+init3 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK,
+                                    Ball BLACK,    Ball BLACK,  Ball BLACK,   Ball BLACK,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 
 init1 :: Board
 init1 = MX.matrix theight bwidth $ (\ (r, _y) -> Ball (colors !! (r `mod` colorNum)))
@@ -118,7 +130,7 @@ genRandBall n = Ball (colors !! (randList !! (bheight*bwidth + n) `mod` colorNum
 -- neighborExist pos board = or [Data.Maybe.isJust (board ! p) | p <- findNeighbor pos]
 
 findNeighbor :: Pos -> [Pos]
-findNeighbor (Pos r c) = if even r then pEven else pOdd
+findNeighbor (Pos r c) = if even r then filter validPos pEven else filter validPos pOdd
   where
     pOdd  = [Pos (r-1) c, Pos (r-1) (c-1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c-1)]
     pEven = [Pos (r-1) c, Pos (r-1) (c+1), Pos r (c+1), Pos r (c-1), Pos (r+1) c, Pos (r+1) (c+1)]
@@ -128,11 +140,8 @@ insertBoard (Pos r c) ball board = case MX.safeSet ball (r, c) board of
                                       Just b  -> b
                                       _       -> board
 
-setBoard :: Pos -> Ball -> Board -> Board
-setBoard = insertBoard
-
 setBoardEmpty :: Pos -> Board -> Board
-setBoardEmpty pos = setBoard pos (Ball EMPTY)
+setBoardEmpty pos = insertBoard pos (Ball EMPTY)
 
 dfsColor' :: Board -> Ball -> Pos -> PosSet -> PosSet
 dfsColor' board ball pos set = if S.member pos set then set else newset
@@ -163,6 +172,7 @@ attachWall :: Pos -> Bool
 attachWall (Pos 1 _) = True
 attachWall (Pos r 1) = odd r
 attachWall (Pos _ c) = c == bwidth
+-- ?
 
 
 removeFromBoard :: Pos -> Board -> Board
@@ -185,46 +195,23 @@ removeDetachBoard board = newBoard
 closeTo :: Float -> Int -> Bool
 closeTo f i = abs (f - int2Float i) < 0.0001
 
-
-isCellEmpty :: Float -> Float -> Board -> Bool
-isCellEmpty r c board = c1 && c2
-  where
-    r' = floor r
-    c' = if even r' then c - 0.5 else c
-    c1 = isNothing (board ! Pos r' (floor c'))
-    c2 = isNothing (board ! Pos r' (ceiling c'))
-
-updateBoard'' :: Pos -> Ball -> Board -> (Bool,Board)
-updateBoard'' pos ball board  = if validPos pos && isNothing (board ! pos) 
-                                then (True, removeDetachBoard (removeFromBoard pos (setBoard pos ball board) )) 
+updateBoard' :: Pos -> Ball -> Board -> (Bool,Board)
+updateBoard' pos ball board  = if validPos pos && isNothing (board ! pos)
+                                then (True, removeDetachBoard (removeFromBoard pos (insertBoard pos ball board)))
                                 else (False, board)
 
-updateBoardc' :: Int -> Float -> Ball -> Board -> Board
-updateBoardc' r c ball board
-  | ron == flr = if b1 then up1 else up2
-  | b2 = up2
-  | otherwise = up1
-  where
-      cel = ceiling c
-      flr = floor c
-      ron = round c
-      (b1, up1) = updateBoard'' (Pos r flr) ball board
-      (b2, up2) = updateBoard'' (Pos r cel) ball board
+hasNeighbors :: Float -> Float -> Board -> Bool
+hasNeighbors r c board = foldr (\p b -> isJust (board ! p) || b) False (findNeighbor (findNearPos r c))
 
+findNearPos :: Float -> Float -> Pos
+findNearPos r c = Pos (round r) (find c)
+  where
+    find c = if even (round r) then floor c else round c
 
 updateBoard :: (Float, Float, Ball) -> Board -> (Bool,Board)
 updateBoard (c, r, ball) board
-  | closeTo r 1 = (True,updateBoardc' 1 c ball board)
-  | isCellEmpty r c board = (False,board)
-  | int2Float (ceiling r) - r < 0.15 = (True,updateBoardc' (ceiling r) c ball board)
-  | otherwise = (True,updateBoardc' (floor r) c ball board)
-
-
-
-
-
-  -- case
-
+  | closeTo r 1 || hasNeighbors r c board = updateBoard' (findNearPos r c) ball board
+  | otherwise = (False, board)
 
 isBoardFinished :: Board -> Bool
 isBoardFinished board = null l || any touchBoardBottom l
@@ -232,11 +219,17 @@ isBoardFinished board = null l || any touchBoardBottom l
     l = filter (\p -> isJust (board ! p)) allPos
 
 touchBoardBottom :: Pos -> Bool
-touchBoardBottom (Pos r _) = r == theight - 1
+touchBoardBottom (Pos r _) = r == theight
 
-
-
-
+--getRandomExistBall :: Board -> Ball
+getExistBalls board seed = ballList !! randInt
+  where 
+    randInt = fst $ randomR (0, length ballList - 1) (mkStdGen seed)
+    ballList = S.toList (foldr getOneBall S.empty allPos)
+      where
+        getOneBall pos set = case board ! pos of
+                              Just ball -> S.insert ball set
+                              Nothing   -> set
 
 
 

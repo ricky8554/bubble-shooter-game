@@ -1,6 +1,6 @@
 module Model.Player where
 
-import Model.Board ( Pos, Board , Ball(..), Color(..),genRandBall)
+import Model.Board ( Pos, Board , Ball(..), Color(..), getExistBalls)
 import System.Random -- (Random(randomRIO))
 import GHC.Float (int2Float)
 import Data.List (sort)
@@ -32,8 +32,8 @@ data Player = Player
   , ball :: Ball
   }
 
-init :: Player
-init = Player 7 10 (genRandBall 1001)
+init :: Board -> Player
+init b = Player 7 10 (getExistBalls b 1001)
 
 
 
@@ -50,9 +50,9 @@ getPlayer p = ( angleList !! angle p, ball p)
 isPlayerFinished :: Player -> Bool
 isPlayerFinished p = ball p == Ball EMPTY
 
-nextPlayer :: Player -> Player
-nextPlayer p = case ballNum p of
+nextPlayer :: Player -> Board -> Player
+nextPlayer p b = case ballNum p of
                 0 -> p
                 1 -> p {ballNum = 0, ball = Ball EMPTY }
-                _ -> p {ballNum = ballNum p - 1, ball = genRandBall (ballNum p)}
+                _ -> p {ballNum = ballNum p - 1, ball = getExistBalls b (ballNum p)}
 

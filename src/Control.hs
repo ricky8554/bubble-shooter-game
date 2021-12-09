@@ -47,7 +47,7 @@ move f s = s { ps = f (ps s) }
 play :: PlayState -> PlayState
 play s = if hasFlyingBall fb then s else s {ps = p, psFlying = fb'} 
   where
-    p = nextPlayer (ps s)
+    p = nextPlayer (ps s) (psBoard s)
     fb = psFlying s
     fb' = setFlyingBall (getPlayer (ps s))
 
