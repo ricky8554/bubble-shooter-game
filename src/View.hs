@@ -12,7 +12,7 @@ import Brick
       AttrMap,
       AttrName,
       Widget, attrName, withAttr, Location (Location), hLimitPercent )
-import Brick.Widgets.Center (center)
+import Brick.Widgets.Center (center, hCenterLayer)
 import Brick.Widgets.Border (borderWithLabel, hBorder, vBorder, border)
 
 import Brick.Widgets.Border.Style (unicode, unicodeBold)
@@ -43,7 +43,26 @@ import Brick.Types (Location(loc))
 -------------------------------------------------------------------------------
 view :: PlayState -> [Widget String]
 -------------------------------------------------------------------------------
-view s = [view' s]
+view s = [ hCenterLayer (angleS s),view' s ]
+
+angleS :: PlayState -> Widget n
+angleS s = if flfb == (Ball EMPTY) then translateBy ll (mkfb' mkfb) else emptyWidget
+  where 
+    ((dx,dy),ball) = getPlayer (ps s)
+    mkfb' f =  (vBox ( reverse  [ f y  | y <- [1..ss]]))
+    mkfb y = (hBox [ mkBlock' (get x y) | x <- [-ssh+1..ssh]])
+    valid x y = if dx == 0 
+                then x == 0
+                else x `mod` dx == 0 && y `mod` dy == 0 && x `div` dx == y `div` dy
+    get x y = if valid x y then b2 else (if (inrange x y) then b3 else b1)
+    b1 = Just (Ball EMPTY ) 
+    b2 = Just (Ball SPECIAL)
+    b3 = Just ball
+    (FlyingBall _ _ _ _ flfb) = psFlying s
+    inrange x y = abs x < 12 && y < 11
+    ss = 24
+    ssh = 24
+    ll = (Location (0,57))
 
 view' :: PlayState -> Widget String
 view' s =
@@ -94,7 +113,7 @@ posFB s r c =
 mkCell' :: PlayState -> Int -> Int -> Widget n
 -- mkCell' _ r c = center (str (printf "(%d, %d)" r c))
 mkCell' s r c
-  | hasFB > 0 = center (mkFBCell hasFB r c y' x' bmb''')
+  | hasFB > 0 = (mkFBCell hasFB r c y' x' bmb''')
   | r == theight && c == (bwidth `div` 2 + 1) =  center (mkCenterBall s)
   | odd r = center (mkBlock bmb)
   | c == 1 || c == (bwidth + 1) =  mkBlock (Just (Ball HALF))
@@ -107,16 +126,9 @@ mkCell' s r c
     (FlyingBall _ _ _ _ flfb) = psFlying s
 
 mkCenterBall :: PlayState -> Widget n
-mkCenterBall s = mkfb' mkfb
-  where 
-    ((dx,dy),ball) = getPlayer (ps s)
-    mkfb' f =  center (vBox [ f y  | y <- [1..bs]])
-    mkfb y = center (hBox [ mkBlock' (if valid x (bs-y+1-bsh) then b2 else b1) | x <- [-bsh+1..bsh]])
-    valid x y = if dx == 0 
-                then x == 0
-                else x `mod` dx == 0 && y `mod` dy == 0 && x `div` dx == y `div` dy
-    b1 = Just ball
-    b2 = Just (Ball SPECIAL)
+mkCenterBall s = mkBlock'' bs bs (Just ball)
+  where
+    ((_,_),ball) = getPlayer (ps s)
     
 mkFBCell :: Int -> Int -> Int -> Int -> Int -> Maybe Ball -> Widget n
 mkFBCell v r c r' c' ball
@@ -126,11 +138,16 @@ mkFBCell v r c r' c' ball
   | v == 4 = mkfb' mkfb4
   where
     ep  = Nothing
-    mkfb' f =  center (vBox [ f y  | y <- [1..bs]])
-    mkfb1 y = center (hBox [ mkBlock' (if x > c' && y > r' `div` 2 then ball else ep) | x <- [1..bs]])
-    mkfb2 y = center (hBox [ mkBlock' (if x < c' && y > r' `div` 2 then ball else ep) | x <- [1..bs]])
-    mkfb3 y = center (hBox [ mkBlock' (if x > c' && y < r' `div` 2 then ball else ep) | x <- [1..bs]])
-    mkfb4 y = center (hBox [ mkBlock' (if x < c' && y < r' `div` 2 then ball else ep) | x <- [1..bs]])
+    mkfb' f = center1 (vBox [ f y  | y <- [1..bs]])
+    mkfb1 y = center1 (hBox [ mkBlock' (if x > c' && y > r' `div` 2 then ball else ep) | x <- [st..end]])
+    mkfb2 y = center1 (hBox [ mkBlock' (if x < c' && y > r' `div` 2 then ball else ep) | x <- [st..end]])
+    mkfb3 y = center1 (hBox [ mkBlock' (if x > c' && y < r' `div` 2 then ball else ep) | x <- [st..end]])
+    mkfb4 y = center1 (hBox [ mkBlock' (if x < c' && y < r' `div` 2 then ball else ep) | x <- [st..end]])
+    -- end = if even r && c == 1 then bsh else bs
+    -- end =  bsh else bs
+    center1 cen = if even r && (c == 1 || c == bwidth + 1) then cen else center cen
+    st = if even r && c == 1 then bsh else 1
+    end = if even r && c == bwidth + 1 then bsh  else bs
 mkFBCell _ _ _ _ _ _ = mkBlock (Just (Ball EMPTY))
 
 mkBlock :: Maybe Ball -> Widget n
@@ -150,6 +167,16 @@ mkBlock'  (Just (Ball BLACK)) =  (withAttr blackAtr blockC)
 mkBlock' (Just (Ball GREEN)) =  (withAttr greenAtr blockC)
 mkBlock' (Just (Ball SPECIAL)) =  (withAttr test1Atr blockC)
 mkBlock'  _  =  blockC
+
+
+mkBlock'' ::  Int -> Int -> Maybe Ball -> Widget n
+mkBlock'' x y (Just (Ball RED)) =  (withAttr redAtr (block x y))
+mkBlock'' x y (Just (Ball BLUE)) =  (withAttr blueAtr (block x y))
+mkBlock'' x y (Just (Ball YELLOW)) =  (withAttr yellowAtr (block x y))
+mkBlock'' x y (Just (Ball BLACK)) =  (withAttr blackAtr (block x y))
+mkBlock'' x y (Just (Ball GREEN)) =  (withAttr greenAtr (block x y))
+mkBlock'' x y (Just (Ball SPECIAL)) =  (withAttr test1Atr (block x y))
+mkBlock''  x y _  =  (block x y)
 
 bs :: Int
 bs = 24
@@ -186,5 +213,5 @@ atrMap = attrMap V.defAttr [
    ,(blackAtr,  V.white  `on` V.white )
    ,(greenAtr,  V.green  `on` V.green )
    ,(testAtr,  V.cyan `on` V.cyan )
-   ,(test1Atr,  V.black  `on` V.black )
+   ,(test1Atr,  V.magenta  `on` V.magenta )
   ]
