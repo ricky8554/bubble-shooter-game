@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Model.Score where
 
--- import Model.Board (Result (..), XO (..))
+import Model.Board (ResultB (..))
 
 -------------------------------------------------------------------------------
 -- | Score --------------------------------------------------------------------
@@ -9,19 +9,16 @@ module Model.Score where
 
 data Score = Score 
   { scMax  :: Int  -- ^ total number of boards
-  , scX    :: Int  -- ^ points for player X 
-  , scO    :: Int  -- ^ points for player O 
-  , scD    :: Int  -- ^ drawn games 
+  , scBall :: Int  -- ^ points for player  
+  , scG    :: Int  -- ^ Finished games
   }
   deriving (Eq, Ord, Show)
 
 init :: Int -> Score
-init n = Score n 0 0 0
+init n = Score n 0 0
 
--- add :: Score -> Maybe XO -> Score
--- add sc (Just X) = sc { scX = scX sc + 1 }
--- add sc (Just O) = sc { scO = scO sc + 1 }
--- add sc Nothing  = sc { scD = scD sc + 1 }
+add :: Score -> Int -> Score
+add sc num = sc { scBall = scBall sc + num, scG = scG sc + 1}
 
 -- get :: Score -> XO -> Int
 -- get Score {..} X = scX 
@@ -35,11 +32,7 @@ init n = Score n 0 0 0
 --   | even (currRound sc) = X
 --   | otherwise           = O
 
--- winner :: Score -> Result () 
--- winner sc@Score {..}
---   | scX > scO + left = Win X
---   | scO > scX + left = Win O
---   | left == 0        = Draw
---   | otherwise        = Cont ()
---   where 
---     left             = 1 + scMax - currRound sc
+winner :: Score -> ResultB () 
+winner sc@Score {..}
+   | scG >= scMax     = Win scBall
+   | otherwise        = Cont ()

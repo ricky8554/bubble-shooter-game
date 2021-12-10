@@ -6,7 +6,7 @@ module Model.Board
     Color (..)
   -- , XO (..)
   , Pos (..)
-  -- , Result (..)
+  , ResultB (..)
 
     -- * Board API
   -- , dim
@@ -18,6 +18,7 @@ module Model.Board
   , genRandBall
   , updateBoard
   , isBoardFinished
+  , failBoard
   , getExistBalls
   -- , put
   -- , positions
@@ -48,6 +49,12 @@ import Data.Bool (Bool)
 data Color = RED | BLUE | YELLOW | BLACK | GREEN | EMPTY | HALF | SPECIAL deriving (Eq, Ord, Show)
 data Ball = Ball Color deriving (Eq, Ord, Show)
 
+data ResultB a 
+  = Win Int
+  | Fail 
+  | Cont a
+  deriving (Eq, Functor, Show)
+
 data Pos = Pos
   { pRow :: Int  -- 1 <= pRow <= dim 
   , pCol :: Int  -- 1 <= pCol <= dim
@@ -77,7 +84,7 @@ theight = bheight + 2
 bwidth :: Int
 bwidth = 5
 
-colorNum:: Int
+colorNum :: Int
 colorNum = 5
 
 colors :: [Color]
@@ -91,23 +98,31 @@ allPos = [ Pos i j | i <- [1..theight], j <- [1..bwidth] ]
 
 
 
-init :: Board
+init :: Int -> Board
+init idx = [init1, init2, init3] !! idx
 -- init = MX.matrix theight bwidth $ uncurry randGenBalls
-init = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
-                                    Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
-
-init3 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK,
-                                    Ball BLACK,    Ball BLACK,  Ball BLACK,   Ball BLACK,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
-
 init1 :: Board
-init1 = MX.matrix theight bwidth $ (\ (r, _y) -> Ball (colors !! (r `mod` colorNum)))
+init1 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
+                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 
 init2 :: Board
-init2 = MX.matrix theight bwidth $ (\ (_x, c) -> Ball (colors !! (c `mod` colorNum)))
+init2 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK,
+                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLACK,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+
+init3 :: Board
+init3 = MX.fromList theight bwidth [Ball BLUE,  Ball BLUE,  Ball BLUE,     Ball BLUE,   Ball BLUE,
+                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLUE,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+-- init1 :: Board
+-- init1 = MX.matrix theight bwidth $ (\ (r, _y) -> Ball (colors !! (r `mod` colorNum)))
+
+-- init2 :: Board
+-- init2 = MX.matrix theight bwidth $ (\ (_x, c) -> Ball (colors !! (c `mod` colorNum)))
 
 rvalues :: [Int]
 rvalues = map fst $ scanl (\(_, gen) _ -> random gen) (random (mkStdGen 1)) $ repeat ()
@@ -214,7 +229,12 @@ updateBoard (c, r, ball) board
   | otherwise = (False, board)
 
 isBoardFinished :: Board -> Bool
-isBoardFinished board = null l || any touchBoardBottom l
+isBoardFinished board = null l
+  where
+    l = filter (\p -> isJust (board ! p)) allPos
+
+failBoard :: Board -> Bool
+failBoard board = any touchBoardBottom l
   where
     l = filter (\p -> isJust (board ! p)) allPos
 
@@ -222,8 +242,9 @@ touchBoardBottom :: Pos -> Bool
 touchBoardBottom (Pos r _) = r == theight
 
 --getRandomExistBall :: Board -> Ball
-getExistBalls board seed = ballList !! randInt
-  where 
+getExistBalls board seed  | not (null ballList) = ballList !! randInt
+                          | otherwise           = Ball EMPTY
+  where
     randInt = fst $ randomR (0, length ballList - 1) (mkStdGen seed)
     ballList = S.toList (foldr getOneBall S.empty allPos)
       where

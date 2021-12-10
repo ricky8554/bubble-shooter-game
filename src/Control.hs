@@ -6,6 +6,7 @@ import qualified Brick.Types as T
 
 import Model
 import Model.Board
+import Model.Score
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Model.Player
 import Model.FlyingBall
@@ -21,13 +22,15 @@ control s ev = case ev of
   -- T.VtyEvent (V.EvKey V.KDown _)  -> Brick.continue (move down  s)
   T.VtyEvent (V.EvKey V.KLeft _)  -> Brick.continue (move left  s)
   T.VtyEvent (V.EvKey V.KRight _) -> Brick.continue (move right s)
-  T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
+  T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt (s {psResult = Fail})
   _                               -> Brick.continue s -- Brick.halt s
 
 -------------------------------------------------------------------------------
 move :: (Player  -> Player) -> PlayState -> PlayState
 -------------------------------------------------------------------------------
 move f s = s { ps = f (ps s) }
+
+
 
 -------------------------------------------------------------------------------
 -- play :: XO -> PlayState -> IO (Result Board)
@@ -55,19 +58,26 @@ play s = if hasFlyingBall fb then s else s {ps = p, psFlying = fb'}
 
 
 nextS :: PlayState -> EventM n (Next PlayState)
-nextS s = case (isBoardFinished b, isPlayerFinished pl, hasFlyingBall fb) of
-  (True, _, _) -> halt s
-  (_, True, False) -> halt s
-  (_, _, _ ) -> continue s' 
+nextS s | failBoard b = halt (s {psResult = Fail})
+        | hasFlyingBall (psFlying s) = Brick.continue s'
+        | isBoardFinished b = nextBoard s'
+        | isPlayerFinished (ps s) = halt s
+        | otherwise = Brick.continue s' 
   where
-    pl = ps s
-    fb = psFlying s
     b = psBoard s
-    fb' = nextFlyingBall fb
+    fb' = nextFlyingBall (psFlying s)
     (b1,b') = updateBoard (getFlyingBall fb') b
     s' = s {psFlying = if b1 then setFlyingBall ((0,0),Ball EMPTY) else fb', psBoard = b'}    
 
-
-
-
-
+nextBoard :: PlayState -> EventM n (Next PlayState)
+nextBoard s = case res' of
+                Win num -> halt (s {psResult = Win num}) 
+                _       -> Brick.continue s' 
+  where 
+    sc'  = add (psScore s) (ballNum (ps s)) 
+    res' = winner sc'
+    s'   = s { psScore = sc'                   -- update the score
+             , psBoard = psBoardList s (scG sc') -- clear the board
+             , psFlying = Model.FlyingBall.init
+             , ps       = Model.Player.init (psBoardList s (scG sc'))
+             }
