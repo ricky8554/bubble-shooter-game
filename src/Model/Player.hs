@@ -14,6 +14,10 @@ data Player = Player
   , ballNum :: Int
   , ball :: Ball
   }
+  deriving (Eq)
+
+-- >>> ((Player 7 12 (Ball YELLOW)) == (Player 7 12 (Ball YELLOW)))
+-- True
 
 angleList :: [(Int, Int)]
 angleList = [(-3,1),(-2,1),(-3,2),(-1,1),

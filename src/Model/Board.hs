@@ -253,10 +253,9 @@ findNearPos r c = Pos (round r) (find c)
 
 updateBoard :: (Float, Float, Ball) -> Board -> (Bool,Board)
 updateBoard (c, r, ball) board
-  | closeTo r 1 || hasNeighbors r c board = updateBoard' (fp1) ball board
+  | closeTo r 1 || hasNeighbors r c board = updateBoard' (findNearPos r c) ball board
   | otherwise = (False, board)
-  where
-    fp1 =  if r - int2Float(floor r) < 0.11 then findNearPos r c else Pos 0 0
+
 
 isBoardFinished :: Board -> Bool
 isBoardFinished board = null l

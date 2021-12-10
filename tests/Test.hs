@@ -19,7 +19,7 @@ import Model.Board (Board,
   , getExistBall
   , testBoard)
 
-import Model.Player
+import Model.Player ( Player(Player) )
 main :: IO ()
 main = do 
   
@@ -38,7 +38,7 @@ main = do
 
   putStrLn "\nTEST REMOVE DETACHED "
   print (updateBoard (1.1, 1.0, (Ball BLACK)) (snd (updateBoard (2.1, 4.04, (Ball YELLOW)) (Model.Board.init 0))) == (True, testBoard 3 ))
-  -- print ((Player 7 12 (Ball YELLOW)) == (Player 7 12 (Ball YELLOW)))
+  -- print ((Model.Player.Player 7 12 (Ball YELLOW)) == (Model.Player.Player 7 12 (Ball YELLOW)))
   putStrLn "\nDone Testing"
   exitWith ExitSuccess 
   return ()
