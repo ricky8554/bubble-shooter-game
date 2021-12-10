@@ -76,13 +76,13 @@ validPos (Pos r c) = r > 0 && c > 0 && r <= theight && ((odd r && c <= bwidth) |
 
 
 bheight :: Int
-bheight = 2
+bheight = 4
 
 theight :: Int
-theight = bheight + 2
+theight = bheight + 4
 
 bwidth :: Int
-bwidth = 5
+bwidth = 10
 
 colorNum :: Int
 colorNum = 5
@@ -102,22 +102,34 @@ init :: Int -> Board
 init idx = [init1, init2, init3] !! idx
 -- init = MX.matrix theight bwidth $ uncurry randGenBalls
 init1 :: Board
-init1 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
-                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+init1 = MX.fromList theight bwidth [Ball YELLOW,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
+                                    Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY ,Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
+                                    Ball YELLOW,  Ball YELLOW,  Ball YELLOW,     Ball YELLOW,   Ball YELLOW, Ball YELLOW,  Ball YELLOW,  Ball YELLOW,     Ball YELLOW,   Ball YELLOW,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 
 init2 :: Board
-init2 = MX.fromList theight bwidth [Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK,
-                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLACK,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+init2 = MX.fromList theight bwidth [Ball RED,  Ball RED,  Ball RED,     Ball RED,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball RED, Ball RED,   Ball RED,
+                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLUE,   Ball BLUE, Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLUE,   Ball EMPTY,
+                                  Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball BLACK, Ball BLACK,   Ball BLACK,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 
 init3 :: Board
-init3 = MX.fromList theight bwidth [Ball BLUE,  Ball BLUE,  Ball BLUE,     Ball BLUE,   Ball BLUE,
-                                  Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball BLUE,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
-                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+init3 = MX.fromList theight bwidth [Ball BLUE,  Ball BLUE,  Ball BLUE,     Ball BLUE,   Ball BLUE, Ball BLUE,  Ball BLUE,  Ball BLUE,     Ball BLUE,   Ball BLUE,
+                                   Ball BLUE,    Ball BLUE,  Ball BLUE,   Ball GREEN,   Ball BLACK, Ball GREEN,    Ball BLUE,  Ball BLUE,   Ball BLUE,   Ball EMPTY,
+                                  Ball BLUE,  Ball BLUE,  Ball BLUE,     Ball GREEN,   Ball GREEN, Ball GREEN,  Ball BLUE,  Ball BLUE,     Ball BLUE,   Ball BLUE,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 -- init1 :: Board
 -- init1 = MX.matrix theight bwidth $ (\ (r, _y) -> Ball (colors !! (r `mod` colorNum)))
 
