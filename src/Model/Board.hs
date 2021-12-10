@@ -17,6 +17,7 @@ module Model.Board
   , isBoardFinished
   , failBoard
   , getExistBall
+  , testBoard
   )
   where
 
@@ -79,6 +80,10 @@ allPos = filter validPos [ Pos i j | i <- [1..theight], j <- [1..bwidth] ]
 init :: Int -> Board
 init idx = [init1, init2, init3, init4] !! idx
 
+testBoard :: Int -> Board
+testBoard idx = [test1, test2, test3, test4] !! idx
+
+-- >>> (updateBoard (5.1, 5.04, (Ball BLACK )) (Model.Board.init 0))                                                                                                     
 init1 :: Board
 init1 = MX.fromList theight bwidth [Ball YELLOW,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
                                     Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY ,Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
@@ -118,6 +123,40 @@ init4 = MX.fromList theight bwidth [Ball BLUE,   Ball BLUE,   Ball YELLOW,  Ball
                                     Ball EMPTY,  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
                                     Ball EMPTY,  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
                                     Ball EMPTY,  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+
+test1 :: Board
+test1 = MX.fromList theight bwidth [Ball EMPTY,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball EMPTY,
+                                    Ball EMPTY,    Ball BLUE,  Ball BLUE,   Ball EMPTY,   Ball EMPTY ,Ball EMPTY,    Ball BLUE,  Ball BLUE,   Ball EMPTY,   Ball EMPTY,
+                                    Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+
+test2 :: Board
+test2 = MX.fromList theight bwidth [Ball YELLOW,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball BLACK, Ball BLACK,  Ball BLACK,  Ball BLACK,     Ball BLACK,   Ball YELLOW,
+                                    Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY ,Ball YELLOW,    Ball BLUE,  Ball BLUE,   Ball YELLOW,   Ball EMPTY,
+                                    Ball YELLOW,  Ball YELLOW,  Ball YELLOW,     Ball YELLOW,   Ball YELLOW, Ball YELLOW,  Ball YELLOW,  Ball YELLOW,     Ball YELLOW,   Ball YELLOW,
+                                  Ball EMPTY,  Ball BLACK,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
+
+test3 :: Board
+test3 = init1
+
+
+test4 :: Board
+test4 = MX.fromList theight bwidth [Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY,
+                                    Ball EMPTY,    Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY ,Ball EMPTY,    Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                    Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,  Ball EMPTY,     Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY,
+                                  Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY, Ball EMPTY,  Ball EMPTY,   Ball EMPTY,   Ball EMPTY,   Ball EMPTY]
 
 rvalues :: [Int]
 rvalues = map fst $ scanl (\(_, gen) _ -> random gen) (random (mkStdGen 1)) $ repeat ()
@@ -214,8 +253,10 @@ findNearPos r c = Pos (round r) (find c)
 
 updateBoard :: (Float, Float, Ball) -> Board -> (Bool,Board)
 updateBoard (c, r, ball) board
-  | closeTo r 1 || hasNeighbors r c board = updateBoard' (findNearPos r c) ball board
+  | closeTo r 1 || hasNeighbors r c board = updateBoard' (fp1) ball board
   | otherwise = (False, board)
+  where
+    fp1 =  if r - int2Float(floor r) < 0.05 then findNearPos r c else Pos 0 0
 
 isBoardFinished :: Board -> Bool
 isBoardFinished board = null l
