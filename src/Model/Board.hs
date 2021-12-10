@@ -256,7 +256,7 @@ updateBoard (c, r, ball) board
   | closeTo r 1 || hasNeighbors r c board = updateBoard' (fp1) ball board
   | otherwise = (False, board)
   where
-    fp1 =  if r - int2Float(floor r) < 0.05 then findNearPos r c else Pos 0 0
+    fp1 =  if r - int2Float(floor r) < 0.1 then findNearPos r c else Pos 0 0
 
 isBoardFinished :: Board -> Bool
 isBoardFinished board = null l
