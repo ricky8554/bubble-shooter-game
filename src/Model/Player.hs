@@ -1,7 +1,7 @@
 module Model.Player where
 
-import Model.Board ( Pos, Board , Ball(..), Color(..), getExistBalls)
-import System.Random -- (Random(randomRIO))
+import Model.Board ( Pos, Board , Ball(..), Color(..), getExistBall)
+import System.Random
 import GHC.Float (int2Float)
 import Data.List (sort)
 import qualified Data.Set as S
@@ -9,8 +9,11 @@ import qualified Data.Set as S
 -------------------------------------------------------------------------------
 -- | Players and Strategies ---------------------------------------------------
 -------------------------------------------------------------------------------
-
-
+data Player = Player
+  { angle  :: Int
+  , ballNum :: Int
+  , ball :: Ball
+  }
 
 angleList :: [(Int, Int)]
 angleList = [(-3,1),(-2,1),(-3,2),(-1,1),
@@ -19,24 +22,15 @@ angleList = [(-3,1),(-2,1),(-3,2),(-1,1),
               (1,3),(1,2),(2,3),(1,1),
               (3,2),(2,1),(3,1)]
 
-
-
-
--- >>> a
--- (-3,1)
-
-
-data Player = Player
-  { angle  :: Int
-  , ballNum :: Int
-  , ball :: Ball
-  }
+realAngleList :: [Float]
+realAngleList = [161.57, 153.43, 146.31, 135,
+                123.7, 116.57, 108.43,
+                90,
+                71.57, 63.43, 56.3, 45,
+                33.69, 26.57, 18.43]
 
 init :: Board -> Player
-init b = Player 7 10 (getExistBalls b 1001)
-
-
-
+init b = Player 7 12 (getExistBall b 1001)
 
 left :: Player -> Player
 left p = p { angle = max (angle p - 1) 0}
@@ -52,7 +46,5 @@ isPlayerFinished p = ball p == Ball EMPTY
 
 nextPlayer :: Player -> Board -> Player
 nextPlayer p b = case ballNum p of
-                0 -> p
-                1 -> p {ballNum = 0, ball = Ball EMPTY }
-                _ -> p {ballNum = ballNum p - 1, ball = getExistBalls b (ballNum p)}
-
+                0 -> p {ballNum = 0, ball = Ball EMPTY }
+                _ -> p {ballNum = ballNum p - 1, ball = getExistBall b (ballNum p)}

@@ -39,14 +39,3 @@ init n = PS
   , psResult = Board.Cont ()
   , psBoardList = Board.init 
   }
-
--- next :: PlayState -> PlayState
--- next s = case getBall (ps s) of
-
--- nextBoard :: PlayState -> Board.Result a -> Either (Board.Result ()) PlayState
--- nextBoard s res = Right s { psBoard = mempty } 
--- next :: PlayState -> Board.Result Board.Board -> Either (Board.Result ()) PlayState
--- next s Board.Retry     = Right s
--- next s (Board.Cont b') = Right (s { psBoard = b'})
--- next s res             = nextBoard s res 
-

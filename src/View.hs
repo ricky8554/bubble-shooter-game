@@ -27,6 +27,7 @@ import System.Random (randomRIO)
 import qualified Graphics.Vty as V
 import Model.FlyingBall
 import Model.Player
+import Model.Score
 import GHC.Float (int2Float, float2Int)
 import Brick.Widgets.Core (setAvailableSize, translateBy)
 import Brick.Types (Location(loc))
@@ -47,22 +48,22 @@ view s = [view' s]
 view' :: PlayState -> Widget String
 view' s =
     center $ withBorderStyle unicodeBold $
-      -- borderWithLabel (str (header s)) $
+        borderWithLabel (str (header s)) $
         vBox [ mkRow s row | row <- [1..theight] ]
 
 header :: PlayState -> String
-header s = printf ""
+header s = printf (" Stage:" ++ show ((scG sc) + 1) ++ ", Score:" ++ show (scBall sc) ++ ", Balls:" ++ show (ballNum p) ++ ", Degree:" ++ show (realAngleList !! (angle p)) ++ " ")
+  where
+    sc = psScore s
+    p  = ps s
 
 mkRow :: PlayState -> Int -> Widget n
 mkRow s row = case even row || row == theight  of
                 True -> hBox [ mkCell s row i | i <- [1..bwidth+1]]
                 _ -> hBox [ mkCell s row i | i <- [1..bwidth] ]
 
-
 mkCell :: PlayState -> Int -> Int -> Widget n
 mkCell s r c = mkCell' s r c
-
-
 
 posFB :: PlayState -> Int -> Int -> (Int, Int, Int)
 posFB s r c =
@@ -117,7 +118,6 @@ mkCenterBall s = mkfb' mkfb
     b1 = Just ball
     b2 = Just (Ball SPECIAL)
     
-
 mkFBCell :: Int -> Int -> Int -> Int -> Int -> Maybe Ball -> Widget n
 mkFBCell v r c r' c' ball
   | v == 1 = mkfb' mkfb1
@@ -133,8 +133,6 @@ mkFBCell v r c r' c' ball
     mkfb4 y = center (hBox [ mkBlock' (if x < c' && y < r' `div` 2 then ball else ep) | x <- [1..bs]])
 mkFBCell _ _ _ _ _ _ = mkBlock (Just (Ball EMPTY))
 
-
-
 mkBlock :: Maybe Ball -> Widget n
 mkBlock (Just (Ball RED)) = border (withAttr redAtr blockB)
 mkBlock (Just (Ball BLUE)) = border (withAttr blueAtr blockB)
@@ -144,7 +142,6 @@ mkBlock (Just (Ball GREEN)) = border (withAttr greenAtr blockB)
 mkBlock (Just (Ball HALF)) = blockHalf
 mkBlock _  = blockB
 
-
 mkBlock' ::  Maybe Ball -> Widget n
 mkBlock'  (Just (Ball RED)) =  (withAttr redAtr blockC)
 mkBlock'  (Just (Ball BLUE)) =  (withAttr blueAtr blockC)
@@ -153,9 +150,6 @@ mkBlock'  (Just (Ball BLACK)) =  (withAttr blackAtr blockC)
 mkBlock' (Just (Ball GREEN)) =  (withAttr greenAtr blockC)
 mkBlock' (Just (Ball SPECIAL)) =  (withAttr test1Atr blockC)
 mkBlock'  _  =  blockC
-
-
-
 
 bs :: Int
 bs = 24
@@ -175,12 +169,6 @@ blockHalf = block bs bsh
 block :: Int -> Int -> Widget n
 block h w =  vBox (replicate h (str (replicate w ' ')))
 
-
-
-
-
-
-
 redAtr, blueAtr, yellowAtr, blackAtr, greenAtr,testAtr,test1Atr :: AttrName
 redAtr    = attrName "redAtr"
 blueAtr   = attrName "blueAtr"
@@ -189,7 +177,6 @@ blackAtr  = attrName "blackAtr"
 greenAtr  = attrName "greenAtr"
 testAtr  = attrName "testAtr"
 test1Atr  = attrName "test1Atr"
-
 
 atrMap :: AttrMap
 atrMap = attrMap V.defAttr [
