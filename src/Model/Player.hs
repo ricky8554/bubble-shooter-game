@@ -16,6 +16,8 @@ data Player = Player
   }
   deriving (Eq)
 
+testpp :: Eq a => a -> a -> Bool
+testpp p p1 = p == p1
 -- >>> ((Player 7 12 (Ball YELLOW)) == (Player 7 12 (Ball YELLOW)))
 -- True
 
